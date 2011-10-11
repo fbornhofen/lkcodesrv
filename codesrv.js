@@ -1,6 +1,9 @@
 var express = require('express');
 var sqlite3 = require('sqlite3');
-var db = new sqlite3.Database('/home/fb/sw/codesrv/codedb.sqlite3');
+var dbPath = process.argv[2];
+
+console.log('using database ' + dbPath);
+var db = new sqlite3.Database(dbPath);
 
 var app = express.createServer();
 
