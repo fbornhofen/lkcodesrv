@@ -11,19 +11,19 @@ function setupDb() {
           "(path string, revision int, timestamp int, user int, contents blob)");
 }
 
-function getRevision(revNr, continuation) {
+function getRevision(revNr, next) {
   db.serialize(function() {
     db.all("SELECT DISTINCT(path) FROM files WHERE revision = " + revNr, function(err, dbres) {
       if (err) {
         console.log(err);
         return;
       }
-      continuation(dbres);
+      next(dbres);
     });
   });
 }
 
-function getFile(fileName, revNr, continuation) {
+function getFile(fileName, revNr, next) {
   db.serialize(function() {
     console.log('getting ' + fileName + '(' + revNr + ')');
     db.all("SELECT * FROM files WHERE path like '" + fileName + "' AND revision = " + revNr, function (err, dbres) {
@@ -31,8 +31,19 @@ function getFile(fileName, revNr, continuation) {
         console.log(err);
         return;
       }
-      continuation(dbres);
+      next(dbres);
     });
+  });
+}
+
+function putFile(fileName, revNr, user, contents, next) {
+  db.serialize(function() {
+    var currentTime = new Date().getTime();
+    // TODO hackhackhack clean this up
+    var stmt = db.prepare("INSERT INTO files (path, revision, timestamp, user, contents) VALUES ('" + 
+      fileName + "', " + revNr + ", " + currentTime + ", " + user + ", (?))");
+    stmt.run(contents); 
+    stmt.finalize(next);
   });
 }
 
@@ -64,17 +75,22 @@ app.get(/^\/(\d+)\/(.*)/, function(req, res) {
   });
 });
 
+// TODO get on file name without revision number yields head revision
+
 var handlePostAndPut = function(req, res) {
   var path = req.params[0];
   var data = '';
-  var respond = function() {res.send(''); console.log(data);};
+  var writeData = function() {
+    // TODO users, revisions
+    putFile(path, 1, 0, data, function() {
+      res.send('');})};
   if (req.body) { 
     data = req.body;
-    respond();
+    putFile(path, 1, 0, data, writeData);
     return;
   }
   req.on('data', function(chunk) { data += chunk; });
-  req.on('end', respond);
+  req.on('end', writeData);
 };
 app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
