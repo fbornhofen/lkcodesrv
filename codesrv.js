@@ -70,6 +70,10 @@ app.get(/^\/(\d+)\/(.*)/, function(req, res) {
       file = req.params[1];
   getFile(file, rev, function(dbres) {
     if (dbres[0]) {
+      if (file.match(/.xhtml$/)) {
+        // keep browsers from killing our CDATA sections, better: store content-type in db
+        res.header('Content-Type', 'application/xhtml+xml');
+      }
       res.send(dbres[0]['contents']);
     } else {
       res.send('');
