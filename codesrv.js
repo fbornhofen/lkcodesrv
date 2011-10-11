@@ -80,24 +80,32 @@ app.get('/:rev', function(req, res) {
   });
 });
 
+
+var sendFileFromDbRow = function(dbres, res) {
+  if (dbres[0]) {
+    if (dbres[0].path.match(/.xhtml$/)) {
+      // keep browsers from killing our CDATA sections, better: store content-type in db
+      res.header('Content-Type', 'application/xhtml+xml');
+    }
+    res.send(dbres[0]['contents']);
+  } else {
+    res.send('');
+    return;
+  }
+}
 app.get(/^\/(\d+)\/(.*)/, function(req, res) {
   var rev = req.params[0],
       file = req.params[1];
-  getFile(file, rev, function(dbres) {
-    if (dbres[0]) {
-      if (file.match(/.xhtml$/)) {
-        // keep browsers from killing our CDATA sections, better: store content-type in db
-        res.header('Content-Type', 'application/xhtml+xml');
-      }
-      res.send(dbres[0]['contents']);
-    } else {
-      res.send('');
-      return;
-    } 
+  getFile(file, rev, function(dbres) {sendFileFromDbRow(dbres, res);});
+});
+app.get(/^\/(.*)/, function(req, res) {
+  var file = req.params[0];
+  getLatestRevisionNumber(function(revNr) {
+    getFile(file, revNr, function(dbres) {sendFileFromDbRow(dbres, res);});
   });
 });
 
-// TODO get on file name without revision number yields head revision
+// TODO GET on file name without revision number yields head revision
 
 var handlePostAndPut = function(req, res) {
   var path = req.params[0];
