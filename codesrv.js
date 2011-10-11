@@ -64,4 +64,20 @@ app.get(/^\/(\d+)\/(.*)/, function(req, res) {
   });
 });
 
+app.post(/^\/(.*)/, function(req, res) {
+  var path = req.params[0];
+  var data = '';
+  var respond = function() {res.send(''); console.log(data);};
+  if (req.body) { 
+    data = req.body;
+    respond();
+    return;
+  }
+  req.on('data', function(chunk) { data += chunk; });
+  req.on('end', respond);
+});
+
+
+// startup
+
 app.listen(3000);
