@@ -1,6 +1,7 @@
 var express = require('express');
 var sqlite3 = require('sqlite3');
 var dbPath = process.argv[2];
+var port = 80;
 
 console.log('using database ' + dbPath);
 var db = new sqlite3.Database(dbPath);
@@ -50,11 +51,25 @@ function putFile(fileName, revNr, user, contents, next) {
   });
 }
 
+function getLatestRevisionNumber(next) {
+  db.serialize(function() {
+    db.all("SELECT MAX(revision) FROM files", function(err, dbres) {
+      next(dbres[0]["MAX(revision)"]);
+    });
+  });
+}
+
 // controller
 
 app.get('/setup', function(req, res) {
   setupDb();
   res.send('check if db has been set up successfully');
+});
+
+app.get('/latest', function(req, res) {
+  getLatestRevisionNumber(function(revNr) {
+    res.send(revNr + "\n");
+  });
 });
 
 app.get('/:rev', function(req, res) {
@@ -104,4 +119,4 @@ app.put (/^\/(.*)/, handlePostAndPut);
 
 // startup
 
-app.listen(3000);
+app.listen(port);
