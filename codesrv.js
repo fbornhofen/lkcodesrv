@@ -29,10 +29,9 @@ function getRevision(revNr, next) {
 
 function getFile(fileName, revNr, next) {
   db.serialize(function() {
-    console.log('getting ' + fileName + '(' + revNr + ')');
     db.all("SELECT * FROM files WHERE path like '" + fileName + "' AND revision = " + revNr, function (err, dbres) {
       if (err) {
-        console.log(err);
+        console.log("getFile: " + err);
         return;
       }
       next(dbres);
@@ -72,13 +71,14 @@ app.get('/latest', function(req, res) {
   });
 });
 
-app.get('/:rev', function(req, res) {
+// this will be a directory listing
+/*app.get('/:rev', function(req, res) {
   getRevision(req.params.rev, function(dbres) {
     var resStr = ''
     resStr = JSON.stringify(dbres);
     res.send(resStr);
   });
-});
+});*/
 
 
 var sendFileFromDbRow = function(dbres, res) {
