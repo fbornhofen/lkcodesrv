@@ -111,6 +111,9 @@ var handlePostAndPut = function(req, res) {
   req.on('data', function(chunk) { data += chunk; });
   req.on('end', writeData);
 };
+// PUT / POST on paths containing revision numbers also create new revisions
+app.post(/^\/\d+\/(.*)/, handlePostAndPut);
+app.put(/^\/\d+\/(.*)/, handlePostAndPut);
 app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
 
