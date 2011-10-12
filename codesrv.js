@@ -1,6 +1,7 @@
 var express = require('express');
 var sqlite3 = require('sqlite3');
 var mime = require('mime');
+var libxml = require('libxmljs');
 var dbPath = process.argv[2];
 var port = 80;
 
@@ -116,6 +117,11 @@ app.post(/^\/\d+\/(.*)/, handlePostAndPut);
 app.put(/^\/\d+\/(.*)/, handlePostAndPut);
 app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
+
+app.propfind(/(.*)/, function(req, res) {
+  console.log("PROPFIND " + req.params[0]);
+  res.send('');
+});
 
 // TODO directory listings if path is prefix
 

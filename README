@@ -6,3 +6,4 @@ Additional npm packages needed:
 - express
 - sqlite3 -> this might change
 - mime
+- libxmljs (DAV)
