@@ -56,6 +56,27 @@ function getLatestRevisionNumber(next) {
   });
 }
 
+function listFilesInPath(path, revNr, next) {
+  db.serialize(function() {
+    db.all("SELECT path FROM files WHERE path LIKE '" + path + "%' AND revision <= " + revNr, function(err, dbres) {
+      var children = {};
+      if (err) {
+        console.log(err);
+        return;
+      }
+      dbres.forEach(function(ea) {
+        var curPath = ea['path'].substring(path.length + (path[path.length-1]=='/'?0:1)), 
+            firstLevelNode = curPath.split('/')[0];
+        console.log(curPath + ' -> ' + firstLevelNode);
+        children[firstLevelNode] = firstLevelNode;
+      });
+      var result = [];
+      for (var prop in children) { result.push(children[prop]); }
+      next(result);
+    });
+  });
+}
+
 // controller
 
 app.get('/setup', function(req, res) {
@@ -66,6 +87,16 @@ app.get('/setup', function(req, res) {
 app.get('/latest', function(req, res) {
   getLatestRevisionNumber(function(revNr) {
     res.send(revNr + "\n");
+  });
+});
+
+app.get(/\/list\/(\d+)\/(.*)/, function(req, res) {
+  var path = req.params[1],
+      rev = req.params[0];
+  console.log(rev + ' ' + path);
+  listFilesInPath(path, rev, function(dirEntries) {
+    console.log(dirEntries.join("\n"));
+    res.send(dirEntries.join("\n"));
   });
 });
 
@@ -127,12 +158,12 @@ app.propfind(/(.*)/, function(req, res) {
         n.node('D:propstat', function(n) {
           n.node('D:prop', function(n) {
             // here be prop tags
-            n.node('lp1:resourcetype', function(n) {
-              n.node('lp1:collection');
-            });
+            //n.node('lp1:resourcetype', function(n) {
+            //  n.node('lp1:collection');
+            //});
             n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
             n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
-            n.node('lp1:getetag', '\"1049e2-440-4ae80de920100\"');
+            //n.node('lp1:getetag', '\"1049e2-440-4ae80de920100\"');
           });
           n.node('D:status', 'HTTP/1.1 200 OK');
         });
