@@ -1,5 +1,6 @@
 var express = require('express');
 var sqlite3 = require('sqlite3');
+var mime = require('mime');
 var dbPath = process.argv[2];
 var port = 80;
 
@@ -83,10 +84,7 @@ app.get('/latest', function(req, res) {
 
 var sendFileFromDbRow = function(dbres, res) {
   if (dbres[0]) {
-    if (dbres[0].path.match(/.xhtml$/)) {
-      // keep browsers from killing our CDATA sections, better: store content-type in db
-      res.header('Content-Type', 'application/xhtml+xml');
-    }
+    res.header('Content-Type', mime.lookup(dbres[0].path));
     res.send(dbres[0]['contents']);
   } else {
     res.send('');
