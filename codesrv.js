@@ -118,9 +118,21 @@ app.put(/^\/\d+\/(.*)/, handlePostAndPut);
 app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
 
+// TODO new method
 app.propfind(/(.*)/, function(req, res) {
+  var doc = new libxml.Document(function(d) {
+    d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
+      n.node('D:response', function (n) {
+        n.node('D:href', 'http://' + req.header('Host') + req.params[0]);
+        n.node('D:propstat', function(n) {
+          // here be D:propstat tag
+        });
+      });
+    });
+  });
+  console.log(doc.toString())
   console.log("PROPFIND " + req.params[0]);
-  res.send('');
+  res.send(doc.toString(), 207);
 });
 
 // TODO directory listings if path is prefix
