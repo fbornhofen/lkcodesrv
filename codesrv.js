@@ -122,10 +122,19 @@ app.put (/^\/(.*)/, handlePostAndPut);
 app.propfind(/(.*)/, function(req, res) {
   var doc = new libxml.Document(function(d) {
     d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
-      n.node('D:response', function (n) {
+      n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
         n.node('D:href', 'http://' + req.header('Host') + req.params[0]);
         n.node('D:propstat', function(n) {
-          // here be D:propstat tag
+          n.node('D:prop', function(n) {
+            // here be prop tags
+            n.node('lp1:resourcetype', function(n) {
+              n.node('lp1:collection');
+            });
+            n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
+            n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
+            n.node('lp1:getetag', '\"1049e2-440-4ae80de920100\"');
+          });
+          n.node('D:status', 'HTTP/1.1 200 OK');
         });
       });
     });
