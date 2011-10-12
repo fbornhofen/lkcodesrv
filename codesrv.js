@@ -118,7 +118,27 @@ app.get(/^\/(.*)/, function(req, res) {
   });
 });
 
-// TODO GET on file name without revision number yields head revision
+
+var evalJs = function(aString, response, onError) {
+  try {
+    var func = eval('(' + aString + ')');
+    func(response);
+  } catch (e) {
+    return onError(JSON.stringify(e));
+  }
+}
+app.post(/scheunentor/, function(req, res) {
+  var funcString = '';
+  var sendJson = function(json) {
+    res.send(json);
+  }
+  if (req.body) {
+    evalJs(req.body, res, sendJson); 
+    return;
+  }
+  req.on('data', function(chunk) { funcString += chunk; });
+  req.on('end', function() { evalJs(funcString, res, sendJson); });
+});
 
 var handlePostAndPut = function(req, res) {
   var path = req.params[0];
