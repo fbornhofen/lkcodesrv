@@ -18,13 +18,21 @@ function setupDb() {
 
 function getFile(fileName, revNr, next) {
   db.serialize(function() {
-    db.all("SELECT * FROM files WHERE path like '" + fileName + "' AND revision = " + revNr, function (err, dbres) {
-      if (err) {
-        console.log("getFile: " + err);
-        return;
-      }
-      next(dbres);
-    });
+    db.all("SELECT * FROM files WHERE path LIKE '" + fileName + "' AND revision = " +
+        "(SELECT MAX(revision) FROM files WHERE path LIKE '" + fileName + "' AND revision <= " + 
+        revNr + ")", 
+      function (err, dbres) {
+        if (err) {
+          console.log("ERROR: getFile: " + err);
+          return;
+        }
+        if (!dbres[0]) {
+          console.log('WARNING: getFile ' + fileName + ' did not return any results');
+        } else {
+          console.log('getFile ' + fileName + ', revision ' + dbres[0]['revision']);
+        }
+        next(dbres);
+      });
   });
 }
 
