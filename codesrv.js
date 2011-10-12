@@ -67,7 +67,6 @@ function listFilesInPath(path, revNr, next) {
       dbres.forEach(function(ea) {
         var curPath = ea['path'].substring(path.length + (path[path.length-1]=='/'?0:1)), 
             firstLevelNode = curPath.split('/')[0];
-        console.log(curPath + ' -> ' + firstLevelNode);
         children[firstLevelNode] = firstLevelNode;
       });
       var result = [];
@@ -93,9 +92,7 @@ app.get('/latest', function(req, res) {
 app.get(/\/list\/(\d+)\/(.*)/, function(req, res) {
   var path = req.params[1],
       rev = req.params[0];
-  console.log(rev + ' ' + path);
   listFilesInPath(path, rev, function(dirEntries) {
-    console.log(dirEntries.join("\n"));
     res.send(dirEntries.join("\n"));
   });
 });
@@ -150,29 +147,42 @@ app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
 
 // TODO new method
-app.propfind(/(.*)/, function(req, res) {
-  var doc = new libxml.Document(function(d) {
-    d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
-      n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
-        n.node('D:href', 'http://' + req.header('Host') + req.params[0]);
-        n.node('D:propstat', function(n) {
-          n.node('D:prop', function(n) {
-            // here be prop tags
-            //n.node('lp1:resourcetype', function(n) {
-            //  n.node('lp1:collection');
-            //});
-            n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
-            n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
-            //n.node('lp1:getetag', '\"1049e2-440-4ae80de920100\"');
+app.propfind(/\/(.*)/, function(req, res) {
+  var path = req.params[0],
+    doc = new libxml.Document(function(d) {
+      d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
+        //console.log('doc: ' + d);
+        //console.log('node: ' + n);
+        getLatestRevisionNumber(function(revNr) {
+          listFilesInPath(path, revNr, function(files) {
+            //console.log('revNr: ' + revNr);
+            //console.log('nFiles: ' + files.length);
+            files.forEach(function (file) {
+              //console.log('root node: ' + n);
+              n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
+                //console.log('response node: ' + n);
+                n.node('D:href', 'http://' + req.header('Host') + path +  file);
+                n.node('D:propstat', function(n) {
+                  n.node('D:prop', function(n) {
+                    n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
+                    n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
+                    //n.node('lp1:resourcetype', function(n) {
+                    //  n.node('lp1:collection');
+                    //});
+                  });
+                });
+              });
+              n.node('D:status', 'HTTP/1.1 200 OK');
+            });
+            console.log('doc: ' + doc.toString());
+            res.header('Content-Type', 'application/xml');
+            res.send(doc.toString(), 207);
           });
-          n.node('D:status', 'HTTP/1.1 200 OK');
         });
+        //console.log('rootnode: ' + n);
       });
     });
-  });
-  console.log(doc.toString())
-  console.log("PROPFIND " + req.params[0]);
-  res.send(doc.toString(), 207);
+  //console.log('BEGIN XML ' + doc.toString() + ' END OF XML')
 });
 
 // TODO directory listings if path is prefix
