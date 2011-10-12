@@ -16,18 +16,6 @@ function setupDb() {
           "(path string, revision int, timestamp int, user int, contents blob)");
 }
 
-function getRevision(revNr, next) {
-  db.serialize(function() {
-    db.all("SELECT DISTINCT(path) FROM files WHERE revision = " + revNr, function(err, dbres) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      next(dbres);
-    });
-  });
-}
-
 function getFile(fileName, revNr, next) {
   db.serialize(function() {
     db.all("SELECT * FROM files WHERE path like '" + fileName + "' AND revision = " + revNr, function (err, dbres) {
@@ -72,16 +60,6 @@ app.get('/latest', function(req, res) {
   });
 });
 
-// this will be a directory listing
-/*app.get('/:rev', function(req, res) {
-  getRevision(req.params.rev, function(dbres) {
-    var resStr = ''
-    resStr = JSON.stringify(dbres);
-    res.send(resStr);
-  });
-});*/
-
-
 var sendFileFromDbRow = function(dbres, res) {
   if (dbres[0]) {
     res.header('Content-Type', mime.lookup(dbres[0].path));
@@ -122,6 +100,9 @@ var handlePostAndPut = function(req, res) {
 };
 app.post(/^\/(.*)/, handlePostAndPut);
 app.put (/^\/(.*)/, handlePostAndPut);
+
+// TODO directory listings if path is prefix
+
 
 // startup
 
