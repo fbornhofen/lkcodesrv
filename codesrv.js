@@ -94,13 +94,18 @@ app.get(/^\/(.*)/, function(req, res) {
 var handlePostAndPut = function(req, res) {
   var path = req.params[0];
   var data = '';
+  var putLatestFile = function(path, user, data, next) {
+    getLatestRevisionNumber(function(revNr) {
+      putFile(path, revNr + 1, user, data, next);
+    });
+  };
   var writeData = function() {
-    // TODO users, revisions
-    putFile(path, 1, 0, data, function() {
-      res.send('');})};
+    // TODO users 
+    putLatestFile(path, 0, data, function() {res.send('');});
+  };
   if (req.body) { 
     data = req.body;
-    putFile(path, 1, 0, data, writeData);
+    writeData();
     return;
   }
   req.on('data', function(chunk) { data += chunk; });
