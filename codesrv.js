@@ -189,28 +189,35 @@ app.put (/^\/(.*)/, handlePostAndPut);
 // TODO new method
 app.propfind(/\/(.*)/, function(req, res) {
   res.header('Content-Type', 'application/xml');
-  var path = req.params[0],
-    doc = new libxml.Document(function(d) {
+  var path = req.params[0];
+  console.log('PROPFIND ' + path);
+  var doc = new libxml.Document(function(d) {
       d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
         getLatestRevisionNumber(function(revNr) {
           listFilesInPath(path, revNr, function(files) {
             var filesProcessed = 0;
             files.forEach(function (file) {
-              n.node('D:status', 'HTTP/1.1 200 OK');
               n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
                 n.node('D:href', 'http://' + req.header('Host') + path +  file);
                 n.node('D:propstat', function(n) {
+                  n.node('D:status', 'HTTP/1.1 200 OK');
                   n.node('D:prop', function(n) {
-                    n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
-                    n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
+                    n.node('D:displayname', path + file);
+                    n.node('D:getcontentlength', 0);                       // stub
+                    n.node('lp1:creationdate', '2011-10-04T23:05:34Z');    // stub
+                    n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z'); // stub
+                    n.node('lp1:getetag', '\"1044c3-1dc-4ae8f5ea0de80\"'); // stub
                     isDirectory(path + file, revNr, function(aBoolean) {
                       if (aBoolean) {
+                        n.node('D:getcontenttype', 'httpd/unix-directory');
                         n.node('lp1:resourcetype', function(n) {
                           n.node('lp1:collection');
                         });
+                      } else {
+                        n.node('D:getcontenttype', mime.lookup(file));
                       }
                       if (++filesProcessed == files.length) {
-                        console.log('doc: ' + doc.toString());
+                        //console.log('doc: ' + doc.toString());
                         res.send(doc.toString(), 207);
                         return;
                       }
@@ -227,10 +234,13 @@ app.propfind(/\/(.*)/, function(req, res) {
 
 var handleOptions = function(req, res) {
   console.log('OPTIONS');
+  res.header('DAV',  '1,2');
+  res.header('DAV', '<http://apache.org/dav/propset/fs/1>');
   res.header('Content-Type', 'httpd/unix-directory');
   res.header('Allow', 'OPTIONS,GET,HEAD,POST,DELETE,TRACE,PROPFIND,PROPPATCH,COPY,MOVE,LOCK,UNLOCK');
   res.send('');
 }
+
 app.options(/\/(d+)\/(.*)/, function(req, res) {
   handleOptions(req, res);
 });
