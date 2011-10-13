@@ -225,7 +225,18 @@ app.propfind(/\/(.*)/, function(req, res) {
     });
 });
 
-// TODO directory listings if path is prefix
+var handleOptions = function(req, res) {
+  console.log('OPTIONS');
+  res.header('Content-Type', 'httpd/unix-directory');
+  res.header('Allow', 'OPTIONS,GET,HEAD,POST,DELETE,TRACE,PROPFIND,PROPPATCH,COPY,MOVE,LOCK,UNLOCK');
+  res.send('');
+}
+app.options(/\/(d+)\/(.*)/, function(req, res) {
+  handleOptions(req, res);
+});
+app.options(/\/(.*)/, function(req, res) {
+  handleOptions(req, res);
+});
 
 
 // startup
