@@ -7,3 +7,4 @@ Additional npm packages needed:
 - sqlite3 -> this might change
 - mime
 - libxmljs (DAV)
+- node-dbi (Database abstraction) to be included
