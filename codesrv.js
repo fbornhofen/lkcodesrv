@@ -18,6 +18,9 @@ function setupDb() {
 }
 
 function getFile(fileName, revNr, next) {
+  var continueWithEmptyResult = function(next) {
+    next([{contents: '', path: fileName, revision: revNr}]);
+  }
   db.serialize(function() {
     db.all("SELECT * FROM files WHERE path LIKE '" + fileName + "' AND revision = " +
         "(SELECT MAX(revision) FROM files WHERE path LIKE '" + fileName + "' AND revision <= " + 
@@ -25,14 +28,15 @@ function getFile(fileName, revNr, next) {
       function (err, dbres) {
         if (err) {
           console.log("ERROR: getFile: " + err);
-          return;
+          continueWithEmptyResult(next);
         }
         if (!dbres[0]) {
           console.log('WARNING: getFile ' + fileName + ' did not return any results');
+          continueWithEmptyResult(next);
         } else {
           console.log('getFile ' + fileName + ', revision ' + dbres[0]['revision']);
+          next(dbres);
         }
-        next(dbres);
       });
   });
 }
@@ -62,6 +66,7 @@ function listFilesInPath(path, revNr, next) {
       var children = {};
       if (err) {
         console.log(err);
+        next([]);
         return;
       }
       dbres.forEach(function(ea) {
@@ -217,6 +222,7 @@ app.propfind(/\/(.*)/, function(req, res) {
           }); */
           listFilesInPath(path, revNr, function(files) {
             var filesProcessed = 0;
+            if (files.length == 0) { res.send(doc.toString(), 404); return; };
             files.forEach(function (file) {
               n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
                 //n.node('D:href', 'http://' + req.header('Host') + path +  file);
@@ -242,7 +248,7 @@ app.propfind(/\/(.*)/, function(req, res) {
                         n.node('D:getcontenttype', mime.lookup(file));
                       }
                       if (++filesProcessed == files.length) {
-                        console.log('doc: ' + doc.toString());
+                        //console.log('doc: ' + doc.toString());
                         res.send(doc.toString(), 207);
                         return;
                       }
