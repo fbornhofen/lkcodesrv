@@ -188,41 +188,41 @@ app.put (/^\/(.*)/, handlePostAndPut);
 
 // TODO new method
 app.propfind(/\/(.*)/, function(req, res) {
+  res.header('Content-Type', 'application/xml');
   var path = req.params[0],
     doc = new libxml.Document(function(d) {
       d.node('D:multistatus', {"xmlns:D": "DAV:"}, function(n) {
-        //console.log('doc: ' + d);
-        //console.log('node: ' + n);
         getLatestRevisionNumber(function(revNr) {
           listFilesInPath(path, revNr, function(files) {
-            //console.log('revNr: ' + revNr);
-            //console.log('nFiles: ' + files.length);
+            var filesProcessed = 0;
             files.forEach(function (file) {
-              //console.log('root node: ' + n);
+              n.node('D:status', 'HTTP/1.1 200 OK');
               n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
-                //console.log('response node: ' + n);
                 n.node('D:href', 'http://' + req.header('Host') + path +  file);
                 n.node('D:propstat', function(n) {
                   n.node('D:prop', function(n) {
                     n.node('lp1:creationdate', '2011-10-04T23:05:34Z');
                     n.node('lp1:getlastmodified', '2011-10-04T23:05:34Z');
-                    //n.node('lp1:resourcetype', function(n) {
-                    //  n.node('lp1:collection');
-                    //});
+                    isDirectory(path + file, revNr, function(aBoolean) {
+                      if (aBoolean) {
+                        n.node('lp1:resourcetype', function(n) {
+                          n.node('lp1:collection');
+                        });
+                      }
+                      if (++filesProcessed == files.length) {
+                        console.log('doc: ' + doc.toString());
+                        res.send(doc.toString(), 207);
+                        return;
+                      }
+                    });
                   });
                 });
               });
-              n.node('D:status', 'HTTP/1.1 200 OK');
             });
-            //console.log('doc: ' + doc.toString());
-            res.header('Content-Type', 'application/xml');
-            res.send(doc.toString(), 207);
           });
         });
-        //console.log('rootnode: ' + n);
       });
     });
-  //console.log('BEGIN XML ' + doc.toString() + ' END OF XML')
 });
 
 // TODO directory listings if path is prefix
