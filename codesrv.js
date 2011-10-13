@@ -76,6 +76,18 @@ function listFilesInPath(path, revNr, next) {
   });
 }
 
+function isDirectory(path, revNr, next) {
+  db.serialize(function() {
+    db.all("SELECT path FROM files WHERE path LIKE '" + path + "/%' AND revision <= " + revNr, function(err, dbres) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      next(dbres.length > 0); // a path p is a directory if there are files in the db that are prefixed by p
+    });
+  });
+}
+
 // controller
 
 app.get('/setup', function(req, res) {
@@ -94,6 +106,14 @@ app.get(/\/list\/(\d+)\/(.*)/, function(req, res) {
       rev = req.params[0];
   listFilesInPath(path, rev, function(dirEntries) {
     res.send(dirEntries.join("\n"));
+  });
+});
+
+app.get(/\/isdir\/(\d+)\/(.*)/, function(req, res) {
+  var path = req.params[1],
+      rev = req.params[0];
+  isDirectory(path, rev, function(aBoolean) {
+    res.send(aBoolean);
   });
 });
 
@@ -194,7 +214,7 @@ app.propfind(/\/(.*)/, function(req, res) {
               });
               n.node('D:status', 'HTTP/1.1 200 OK');
             });
-            console.log('doc: ' + doc.toString());
+            //console.log('doc: ' + doc.toString());
             res.header('Content-Type', 'application/xml');
             res.send(doc.toString(), 207);
           });
