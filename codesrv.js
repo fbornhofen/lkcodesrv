@@ -10,14 +10,19 @@ var db = new sqlite3.Database(dbPath);
 
 var app = express.createServer();
 
+var Controller = {};
 // logic
 
-function setupDb() {
+var getDatabase = Controller.getDatabase = function() {
+  return db;
+}
+
+var setupDb = Controller.setupDb = function() {
   db.exec("DROP TABLE IF EXISTS files; CREATE TABLE files " +
           "(path string, revision int, timestamp int, user int, contents blob)");
 }
 
-function getFile(fileName, revNr, next) {
+var getFile = Controller.getFile = function(fileName, revNr, next) {
   var continueWithEmptyResult = function(next) {
     next([{contents: '', path: fileName, revision: revNr}]);
   }
@@ -41,7 +46,7 @@ function getFile(fileName, revNr, next) {
   });
 }
 
-function putFile(fileName, revNr, user, contents, next) {
+var putFile = Controller.putFile = function(fileName, revNr, user, contents, next) {
   db.serialize(function() {
     var currentTime = new Date().getTime();
     // TODO hackhackhack clean this up
@@ -52,7 +57,7 @@ function putFile(fileName, revNr, user, contents, next) {
   });
 }
 
-function getLatestRevisionNumber(next) {
+var getLatestRevisionNumber = Controller.getLatestRevisionNumber = function(next) {
   db.serialize(function() {
     db.all("SELECT MAX(revision) FROM files", function(err, dbres) {
       next(dbres[0]["MAX(revision)"]);
@@ -60,7 +65,7 @@ function getLatestRevisionNumber(next) {
   });
 }
 
-function listFilesInPath(path, revNr, next) {
+var listFilesInPath = Controller.listFilesInPath = function(path, revNr, next) {
   db.serialize(function() {
     db.all("SELECT path FROM files WHERE path LIKE '" + path + "%' AND revision <= " + revNr, function(err, dbres) {
       var children = {};
@@ -81,7 +86,7 @@ function listFilesInPath(path, revNr, next) {
   });
 }
 
-function isDirectory(path, revNr, next) {
+var isDirectory = Controller.isDirectory = function(path, revNr, next) {
   db.serialize(function() {
     db.all("SELECT path FROM files WHERE path LIKE '" + path + "/%' AND revision <= " + revNr, function(err, dbres) {
       if (err) {
@@ -95,34 +100,7 @@ function isDirectory(path, revNr, next) {
 
 // controller
 
-app.get('/setup', function(req, res) {
-  setupDb();
-  res.send('check if db has been set up successfully');
-});
-
-app.get('/latest', function(req, res) {
-  getLatestRevisionNumber(function(revNr) {
-    res.send(revNr + "\n");
-  });
-});
-
-app.get(/\/list\/(\d+)\/(.*)/, function(req, res) {
-  var path = req.params[1],
-      rev = req.params[0];
-  listFilesInPath(path, rev, function(dirEntries) {
-    res.send(dirEntries.join("\n"));
-  });
-});
-
-app.get(/\/isdir\/(\d+)\/(.*)/, function(req, res) {
-  var path = req.params[1],
-      rev = req.params[0];
-  isDirectory(path, rev, function(aBoolean) {
-    res.send(aBoolean);
-  });
-});
-
-var sendFileFromDbRow = function(dbres, res) {
+var sendFileFromDbRow = Controller.sendFileFromDbRow = function(dbres, res) {
   if (dbres[0]) {
     res.header('Content-Type', mime.lookup(dbres[0].path));
     res.send(dbres[0]['contents']);
@@ -131,20 +109,8 @@ var sendFileFromDbRow = function(dbres, res) {
     return;
   }
 }
-app.get(/^\/(\d+)\/(.*)/, function(req, res) {
-  var rev = req.params[0],
-      file = req.params[1];
-  getFile(file, rev, function(dbres) {sendFileFromDbRow(dbres, res);});
-});
-app.get(/^\/(.*)/, function(req, res) {
-  var file = req.params[0];
-  getLatestRevisionNumber(function(revNr) {
-    getFile(file, revNr, function(dbres) {sendFileFromDbRow(dbres, res);});
-  });
-});
 
-
-var evalJs = function(aString, response, onError) {
+var evalJs = Controller.evalJs = function(aString, response, onError) {
   try {
     var func = eval('(' + aString + ')');
     func(response);
@@ -152,20 +118,8 @@ var evalJs = function(aString, response, onError) {
     return onError(JSON.stringify(e));
   }
 }
-app.post(/scheunentor/, function(req, res) {
-  var funcString = '';
-  var sendJson = function(json) {
-    res.send(json);
-  }
-  if (req.body) {
-    evalJs(req.body, res, sendJson); 
-    return;
-  }
-  req.on('data', function(chunk) { funcString += chunk; });
-  req.on('end', function() { evalJs(funcString, res, sendJson); });
-});
 
-var handlePostAndPut = function(req, res) {
+var handlePostAndPut = Controller.handlePostAndPut = function(req, res) {
   var path = req.params[0];
   var data = '';
   var putLatestFile = function(path, user, data, next) {
@@ -185,14 +139,9 @@ var handlePostAndPut = function(req, res) {
   req.on('data', function(chunk) { data += chunk; });
   req.on('end', writeData);
 };
-// PUT / POST on paths containing revision numbers also create new revisions
-app.post(/^\/\d+\/(.*)/, handlePostAndPut);
-app.put(/^\/\d+\/(.*)/, handlePostAndPut);
-app.post(/^\/(.*)/, handlePostAndPut);
-app.put (/^\/(.*)/, handlePostAndPut);
 
 // TODO new method
-app.propfind(/\/(.*)/, function(req, res) {
+var propFindPath = Controller.propfindPath = function(req, res) {
   res.header('Content-Type', 'application/xml');
   var path = req.params[0],
       absPath = '/' + path;
@@ -261,9 +210,9 @@ app.propfind(/\/(.*)/, function(req, res) {
         });
       });
     });
-});
+};
 
-var handleOptions = function(req, res) {
+var handleOptions = Controller.handleOptions = function(req, res) {
   console.log('OPTIONS');
   res.header('MS-Author-Via', 'DAV');
   res.header('Vary: Accept-Encoding');
@@ -274,14 +223,9 @@ var handleOptions = function(req, res) {
   res.send('');
 }
 
-app.options(/\/(d+)\/(.*)/, function(req, res) {
-  handleOptions(req, res);
-});
-app.options(/\/(.*)/, function(req, res) {
-  handleOptions(req, res);
-});
 
 
 // startup
+require('./routes/routes.js')(app, Controller);
 
 app.listen(port);
