@@ -1,18 +1,18 @@
 module.exports = function(app, controller) {
 
-  var db = controller.getDatabase();
+  var codedb = controller.getCodeDb();
   
   // GET setup
 
   app.get('/setup', function(req, res) {
-    controller.setupDb();
+    codedb.setupDb();
     res.send('check if db has been set up successfully');
   });
 
   // GET info
   
   app.get('/latest', function(req, res) {
-    controller.getLatestRevisionNumber(function(revNr) {
+    codedb.getLatestRevisionNumber(function(revNr) {
       res.send(revNr + "\n");
     });
   });
@@ -20,7 +20,7 @@ module.exports = function(app, controller) {
   app.get(/\/list\/(\d+)\/(.*)/, function(req, res) {
     var path = req.params[1],
         rev = req.params[0];
-    controller.listFilesInPath(path, rev, function(dirEntries) {
+    codedb.listFilesInPath(path, rev, function(dirEntries) {
       res.send(dirEntries.join("\n"));
     });
   });
@@ -28,7 +28,7 @@ module.exports = function(app, controller) {
   app.get(/\/isdir\/(\d+)\/(.*)/, function(req, res) {
     var path = req.params[1],
         rev = req.params[0];
-    controller.isDirectory(path, rev, function(aBoolean) {
+    codedb.isDirectory(path, rev, function(aBoolean) {
       res.send(aBoolean);
     });
   });
@@ -38,12 +38,12 @@ module.exports = function(app, controller) {
   app.get(/^\/(\d+)\/(.*)/, function(req, res) {
     var rev = req.params[0],
         file = req.params[1];
-    controller.getFile(file, rev, function(dbres) {controller.sendFileFromDbRow(dbres, res);});
+    codedb.getFile(file, rev, function(dbres) {controller.sendFileFromDbRow(dbres, res);});
   });
   app.get(/^\/(.*)/, function(req, res) {
     var file = req.params[0];
-    controller.getLatestRevisionNumber(function(revNr) {
-      controller.getFile(file, revNr, function(dbres) {controller.sendFileFromDbRow(dbres, res);});
+    codedb.getLatestRevisionNumber(function(revNr) {
+      codedb.getFile(file, revNr, function(dbres) {controller.sendFileFromDbRow(dbres, res);});
     });
   });
 

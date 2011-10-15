@@ -10,7 +10,8 @@ var db = new sqlite3.Database(dbPath);
 
 var app = express.createServer();
 
-var controller = require('./controller/controller.js')(db);
+var codeDatabase = require('./codedatabase/codedatabase.js')(db);
+var controller = require('./controller/controller.js')(codeDatabase);
 require('./routes/routes.js')(app, controller);
 
 app.listen(port);

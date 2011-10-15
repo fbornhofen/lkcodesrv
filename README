@@ -8,3 +8,4 @@ Additional npm packages needed:
 - mime
 - libxmljs (DAV)
 - node-dbi (Database abstraction) to be included
+- log4js to be included
