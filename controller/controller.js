@@ -165,10 +165,9 @@ module.exports = function(database) {
               var filesProcessed = 0;
               if (files.length == 0) { res.send(doc.toString(), 404); return; };
               files.forEach(function (file) {
-                n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (n) {
+                n.node('D:response', {'xmlns:lp1': 'DAV:'}, function (respNode) {
                   //n.node('D:href', 'http://' + req.header('Host') + path +  file);
-                  n.node('D:href', absPath + file);
-                  n.node('D:propstat', function(n) {
+                  respNode.node('D:propstat', function(n) {
                     n.node('D:status', 'HTTP/1.1 200 OK');
                     n.node('D:prop', function(n) {
                       n.node('D:displayname', absPath + file);
@@ -188,6 +187,8 @@ module.exports = function(database) {
                         } else {
                           n.node('D:getcontenttype', mime.lookup(file));
                         }
+                        // this is how lively decides whether a path is a directory...
+                        respNode.node('D:href', absPath + file + (aBoolean?'/':''));
                         if (++filesProcessed == files.length) {
                           //console.log('doc: ' + doc.toString());
                           res.send(doc.toString(), 207);
