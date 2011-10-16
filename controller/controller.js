@@ -39,7 +39,7 @@ module.exports = function(codeDatabase) {
     };
     var writeData = function() {
       // TODO users 
-      codedb.putLatestFile(path, 0, data, function() {res.send('');});
+      putLatestFile(path, 0, data, function() {res.send('');});
     };
     if (req.body) {
       data = req.body;
