@@ -22,6 +22,6 @@ var app = express.createServer();
 
 var codeDatabase = require('./lib/codedatabase.js')(db, logger);
 var controller = require('./lib/controller.js')(codeDatabase, logger);
-require('./lib/routes.js')(app, controller);
+require('./lib/routes.js')(app, controller, logger);
 
 app.listen(port);
