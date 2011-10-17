@@ -1,5 +1,6 @@
 var express = require('express');
-var sqlite3 = require('sqlite3');
+//var sqlite3 = require('sqlite3');
+var DBWrapper = require('node-dbi').DBWrapper;
 var log4js = require('log4js');
 var dbPath = process.argv[2];
 var port = 80;
@@ -7,8 +8,15 @@ var port = 80;
 var logger = log4js.getLogger();
 logger.setLevel('info');
 
-logger.info('using database ' + dbPath);
-var db = new sqlite3.Database(dbPath);
+var dbConfig = {
+  path: dbPath
+};
+//var db = new sqlite3.Database(dbPath);
+var db = new DBWrapper('sqlite3', dbConfig);
+db.connect(function(arg) {
+  logger.info('db ' + (db._connected?'connected':'NOT connected'));
+  });
+logger.info('using database ' + dbConfig.path);
 
 var app = express.createServer();
 
