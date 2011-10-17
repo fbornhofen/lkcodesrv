@@ -1,0 +1,8 @@
+module.exports.dbConfig = {
+  adapter: 'sqlite3',
+  path: 'livelydb.sqlite3',
+};
+
+module.exports.logLevel = 'info';
+
+module.exports.port = 80;
