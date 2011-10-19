@@ -4,8 +4,8 @@ This is an experiment to serve Lively code off a database.
 
 Additional npm packages needed:
 - express
-- sqlite3 -> this might change
 - mime
 - libxmljs (DAV)
 - log4js 
-- node-dbi (Database abstraction) to be included
+- node-dbi (Database abstraction) 
+- request (for simple proxy functionality)
