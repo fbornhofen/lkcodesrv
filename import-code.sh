@@ -5,7 +5,7 @@ LK_PORT=$2
 LK_CODEDB="livelydb.sqlite3"
 
 if [ "$LK_PORT" = "" ]; then
-  LK_PORT=80
+  LK_PORT=8888
 fi
 
 cd $LK_PATH
