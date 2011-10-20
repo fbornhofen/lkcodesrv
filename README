@@ -7,5 +7,6 @@ Additional npm packages needed:
 - mime
 - libxmljs (DAV)
 - log4js 
+- sqlite3
 - node-dbi (Database abstraction) 
 - request (for simple proxy functionality)
