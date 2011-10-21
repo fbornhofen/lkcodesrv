@@ -1,12 +1,12 @@
 Code Server for Lively
 ======================
-This is an experiment to serve Lively code off a database.
+This is an experiment to serve Lively code off a database. 
 
-Additional npm packages needed:
-- express
-- mime
+Prerequisites:
 - libxmljs (DAV)
-- log4js 
 - sqlite3
-- node-dbi (Database abstraction) 
-- request (for simple proxy functionality)
+
+Setup:
+- start database node server
+- initialize database through route /setup
+- ./import-code.sh <REPOSITORY> <PORT>
