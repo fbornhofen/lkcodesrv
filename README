@@ -2,11 +2,28 @@ Code Server for Lively
 ======================
 This is an experiment to serve Lively code off a database. 
 
-Prerequisites:
-- libxmljs (DAV)
-- sqlite3
 
-Setup:
-- start database node server
-- initialize database through route /setup
-- ./import-code.sh <REPOSITORY> <PORT>
+Prerequisites:
+==============
+You need to have Node.js and npm installed. We currently run on version 0.4.12 (stable) of Node.js.
+Development files of the following packages are necessary to build the required Node.js modules:
+- libxml2
+- sqlite3
+On Linux, you can usually install these through your package manager (*-dev or *-devel). On OSX, install these programs using MacPorts or Homebrew.
+
+
+Installation:
+=============
+- Check out this git repository
+- cd to your local clone and run "npm install". This installs a few additional modules.
+- Copy config.js.default to config.js. You can configure things like lkcodesrv's port number there.
+
+
+Running Lively Kernel on lkcodesrv
+==================================
+- Run "node codesrv.js" to start the server
+- Initialize database through route http://YOUR_HOSTNAME:PORT_FROM_config.js/setup
+- Get a copy of the Lively Kernel code. You can get zipped snapshots from here: http://lively-kernel.org/other/releases/ or check out the lively github repository.
+- Run "./import-code.sh <PATH_TO_YOUR_LIVELY_CODE> <PORT>" to copy your local LK files to the database.
+- Open http://YOUR_HOSTNAME:PORT/blank.xhtml in your web browser (Chrome, preferably).
+Enjoy!
