@@ -1,7 +1,23 @@
-Code Server for Lively
-======================
-This is an experiment to serve Lively code off a database. 
+Code Server for Lively Kernel
+=============================
+This is an experiment to serve Lively code off a database. It's dirty, it's unstable, it's going to change quickly.
+ 
+The idea is to load all Lively Kernel files into a database (CodeDB will be a more elaborate approach, though) and have a Node.js web server serve them. We gain a few advantages doing it that way:
+- We eliminate the need for a local Apache installation if you want to run LK locally.
+- The code server will always be connected to the database that contains the code. We can add routes to the server (possibly at runtime) that manipulate the database. This makes development of database applications in the Lively Kernel a lot easier.
 
+Status:
+=======
+Things lkcodesrv can do:
+- Deliver LK xhtml and js files to your browser
+- Basic support for PUT and POST operations to save your worlds and js files
+- Very basic support for PROPFIND. It's just enough to let you use SCB and the PartsBin browser.
+- Basic proxy functionality for WebResource. Be careful with binary data.
+- Execute arbitrary JavaScript code on the server side. This is why deploying this piece of software on a public server is a VERY BAD IDEA.
+
+Things lkcodesrv can NOT do (yet):
+- user authentication
+- create empty folders
 
 Prerequisites:
 ==============
@@ -19,8 +35,8 @@ Installation:
 - Copy config.js.default to config.js. You can configure things like lkcodesrv's port number there.
 
 
-Running Lively Kernel on lkcodesrv
-==================================
+Running Lively Kernel on lkcodesrv:
+===================================
 - Run "node codesrv.js" to start the server
 - Initialize database through route http://YOUR_HOSTNAME:PORT_FROM_config.js/setup
 - Get a copy of the Lively Kernel code. You can get zipped snapshots from here: http://lively-kernel.org/other/releases/ or check out the lively github repository.
