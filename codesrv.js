@@ -22,4 +22,5 @@ var controller = require('./lib/controller.js')(codeDatabase, logger);
 require('./lib/routes.js')(app, controller, logger, proxy);
 
 app.listen(config.port);
+logger.info('listening on port ' + config.port);
 
